@@ -75,9 +75,18 @@ uvicorn app.main:app --reload
 
 ¡Listo! La API estará funcionando en `http://127.0.0.1:8000`.
 
-### 8. Probar la API
+## ✅ Ejecución de Tests
 
-Puedes empezar a probar los endpoints de dos maneras:
+El proyecto incluye una suite de tests automatizados para garantizar la fiabilidad de la API. Utilizamos `pytest` para la ejecución de los tests.
 
-1.  **Documentación Interactiva**: Abre tu navegador y visita `http://127.0.0.1:8000/docs`. Desde aquí puedes ver todos los endpoints y probarlos directamente.
-2.  **Mediante `curl` o un cliente de API (Postman, Insomnia)**: Puedes usar los comandos `curl` proporcionados en el historial de desarrollo para probar las operaciones CRUD.
+Para ejecutar la suite completa de tests, asegúrate de estar en el directorio raíz del proyecto (`/Backend`) y ejecuta el siguiente comando:
+
+```bash
+python -m pytest
+```
+
+Los tests se conectarán automáticamente a una base de datos de prueba separada (`KalendasDB_Test`), ejecutarán las pruebas contra todos los endpoints y luego limpiarán la base de datos de prueba. Esto asegura que los datos de desarrollo no se vean afectados. Para ver más detalles durante la ejecución (como la salida de `print`), puedes usar el flag `-s`:
+
+```bash
+python -m pytest -s
+```
