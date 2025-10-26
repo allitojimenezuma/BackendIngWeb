@@ -18,7 +18,6 @@ def test_db(monkeypatch):
     test_client = MongoClient(uri, uuidRepresentation='standard')
     test_db = test_client[test_db_name]
 
-    # --- Monkeypatching ---
     # Reemplazamos los objetos de la BBDD en app.database con los de test
     monkeypatch.setattr("app.database.client", test_client)
     monkeypatch.setattr("app.database.db", test_db)
@@ -27,7 +26,7 @@ def test_db(monkeypatch):
 
     print(f"\n--- Usando BBDD de test: {test_db_name} ---")
 
-    # Aquí es donde se ejecuta el test
+    # Ejecutar tests
     yield
 
     test_client.drop_database(test_db_name)

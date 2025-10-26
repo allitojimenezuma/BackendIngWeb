@@ -33,7 +33,6 @@ class EventInDB(EventBase):
 
     model_config = ConfigDict(
         populate_by_name=True,
-        # Quitamos el encoder de ObjectId
         json_encoders={datetime: lambda dt: dt.isoformat()},
         json_schema_extra={
             "example": {

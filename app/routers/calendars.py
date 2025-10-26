@@ -65,7 +65,6 @@ async def get_calendar(id: UUID):
     """
     Busca un calendario por su ID. Devuelve 404 si no lo encuentra.
     """
-    # La variable 'id' ya es un objeto UUID.
     calendar = database.calendarios_collection.find_one({"_id": id})
     if calendar:
         return calendar
@@ -80,13 +79,12 @@ async def get_calendar(id: UUID):
     response_description="Actualizar un calendario por su ID",
 )
 async def update_calendar(
-    id: UUID, # FastAPI valida y convierte el UUID
+    id: UUID, 
     calendar_update: Annotated[CalendarCreate, Body(...)]
 ):
     """
     Actualiza un calendario existente. Devuelve 404 si no lo encuentra.
     """
-    # Ya no necesitamos el bloque try/except
     updated_calendar = database.calendarios_collection.find_one_and_update(
         {"_id": id},
         {"$set": calendar_update.model_dump(by_alias=True, exclude_unset=True)},
@@ -105,7 +103,7 @@ async def update_calendar(
     status_code=status.HTTP_204_NO_CONTENT,
     response_description="Eliminar un calendario por su ID",
 )
-async def delete_calendar(id: UUID): # FastAPI valida y convierte el UUID
+async def delete_calendar(id: UUID):
     """
     Elimina un calendario por su ID. Devuelve 204 si tiene éxito o 404 si no lo encuentra.
     """

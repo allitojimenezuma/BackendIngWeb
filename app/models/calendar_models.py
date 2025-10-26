@@ -21,7 +21,6 @@ class CalendarInDB(CalendarBase):
     # Configuración para Pydantic v2
     model_config = ConfigDict(
         populate_by_name=True,
-        # Ya no necesitamos el encoder para ObjectId
         json_schema_extra={
             "example": {
                 "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479", 
