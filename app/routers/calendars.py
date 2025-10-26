@@ -4,7 +4,7 @@ from typing import List, Annotated
 from uuid import UUID, uuid4
 
 from ..models.calendar_models import CalendarCreate, CalendarInDB
-from ..database import calendarios_collection
+from .. import database
 
 # Router que agrupará todos los endpoints de calendarios.
 router = APIRouter(
@@ -37,8 +37,8 @@ async def create_calendar(
     """
     calendar_dict = calendar.model_dump(by_alias=True)
     calendar_dict["_id"] = uuid4()
-    new_calendar = calendarios_collection.insert_one(calendar_dict)
-    created_calendar = calendarios_collection.find_one({"_id": new_calendar.inserted_id})
+    new_calendar = database.calendarios_collection.insert_one(calendar_dict)
+    created_calendar = database.calendarios_collection.find_one({"_id": new_calendar.inserted_id})
     return created_calendar
 
 
@@ -52,7 +52,7 @@ async def list_calendars():
     """
     Devuelve una lista de todos los calendarios en la base de datos.
     """
-    return list(calendarios_collection.find({}))
+    return list(database.calendarios_collection.find({}))
 
 
 # 3. GET /calendars/{id} : Obtener un calendario específico por su ID
@@ -65,9 +65,8 @@ async def get_calendar(id: UUID):
     """
     Busca un calendario por su ID. Devuelve 404 si no lo encuentra.
     """
-    # Ya no necesitamos el bloque try/except, FastAPI se encarga de la validación.
     # La variable 'id' ya es un objeto UUID.
-    calendar = calendarios_collection.find_one({"_id": id})
+    calendar = database.calendarios_collection.find_one({"_id": id})
     if calendar:
         return calendar
 
@@ -88,7 +87,7 @@ async def update_calendar(
     Actualiza un calendario existente. Devuelve 404 si no lo encuentra.
     """
     # Ya no necesitamos el bloque try/except
-    updated_calendar = calendarios_collection.find_one_and_update(
+    updated_calendar = database.calendarios_collection.find_one_and_update(
         {"_id": id},
         {"$set": calendar_update.model_dump(by_alias=True, exclude_unset=True)},
         return_document=ReturnDocument.AFTER
@@ -110,7 +109,7 @@ async def delete_calendar(id: UUID): # FastAPI valida y convierte el UUID
     """
     Elimina un calendario por su ID. Devuelve 204 si tiene éxito o 404 si no lo encuentra.
     """
-    delete_result = calendarios_collection.delete_one({"_id": id})
+    delete_result = database.calendarios_collection.delete_one({"_id": id})
 
     if delete_result.deleted_count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendario con ID {id} no encontrado")

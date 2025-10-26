@@ -4,9 +4,9 @@ from uuid import UUID
 
 # Modelo BASE
 class CalendarBase(BaseModel):
-    titulo: str = Field(..., min_length=3, example="Eventos Culturales de la Ciudad")
-    organizador: str = Field(..., example="Ayuntamiento Central")
-    palabras_clave: List[str] = Field(default=[], example=["cultura", "ciudad"])
+    titulo: str = Field(..., min_length=3, json_schema_extra={"example": "Eventos Culturales de la Ciudad"})
+    organizador: str = Field(..., json_schema_extra={"example": "Ayuntamiento Central"})
+    palabras_clave: List[str] = Field(default=[], json_schema_extra={"example": ["cultura", "ciudad"]})
     es_publico: bool = True
     id_calendario_padre: Optional[UUID] = Field(default=None, alias="idCalendarioPadre")
 
