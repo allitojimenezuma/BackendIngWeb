@@ -1,0 +1,21 @@
+
+services:
+  # ----------------------------------------------------
+  # 1. Servicio de la API (Tu microservicio FastAPI)
+  # ----------------------------------------------------
+  api:
+    # Usa el Dockerfile actual para construir la imagen
+    build: 
+      context: . 
+      dockerfile: dockerfile
+    
+    # Mapea el puerto del contenedor (8000) a tu host local (8000)
+    ports:
+      - "8000:8000"
+      
+    # Variables de entorno para la configuración de la DB
+    environment:
+      # IMPORTANTE: Usamos 'db' como hostname, que es el nombre del servicio de la base de datos
+      DATABASE_URL: mongodb+srv://ignacio:Database15*@cluster0.mmxuyas.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      # Puedes añadir aquí otras variables de entorno
+      
