@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Body, Response, status, HTTPException
+from fastapi import APIRouter, Body, Response, status, HTTPException, Query
 from pymongo import ReturnDocument
-from typing import List, Annotated
+from typing import List, Annotated, Optional
 from uuid import UUID, uuid4
+from datetime import datetime
 
 from ..models.event_models import EventCreate,EventInDB
 from .. import database
@@ -55,17 +56,74 @@ async def create_event(
     created_event = database.eventos_collection.find_one({"_id": new_event.inserted_id})
     return created_event
 
-# 2. GET /events : Obtener una lista de todos los eventos
+# 2. GET /events : Obtener una lista de todos los eventos (con filtros opcionales)
 @router.get(
     "/",
     response_model=List[EventInDB],
-    response_description="Listar todos los eventos",
+    response_description="Listar todos los eventos con filtros opcionales",
 )
-async def list_events():
+async def list_events(
+    fecha_inicio: Optional[datetime] = Query(
+        None, 
+        description="Fecha de inicio del rango (formato ISO: YYYY-MM-DDTHH:MM:SS)",
+        example="2025-01-01T00:00:00"
+    ),
+    fecha_fin: Optional[datetime] = Query(
+        None, 
+        description="Fecha de fin del rango (formato ISO: YYYY-MM-DDTHH:MM:SS)",
+        example="2025-12-31T23:59:59"
+    ),
+    lugar: Optional[str] = Query(None, description="Filtrar por lugar"),
+    organizador: Optional[str] = Query(None, description="Filtrar por organizador"),
+    titulo: Optional[str] = Query(None, description="Filtrar por título"),
+    duration_minima: Optional[int] = Query(None, description="Filtrar por duración minima en minutos"),
+    duration_maxima: Optional[int] = Query(None, description="Filtrar por duración maxima en minutos"),
+):
     """
-    Devuelve una lista de todos los calendarios en la base de datos.
+    Devuelve una lista de eventos filtrados por rango de fechas.
+    
+    - **fecha_inicio**: Filtra eventos que comiencen a partir de esta fecha (inclusive)
+    - **fecha_fin**: Filtra eventos que comiencen hasta esta fecha (inclusive)
+    - **lugar**: Filtra eventos que contengan este texto en el lugar (case insensitive)
+    - **organizador**: Filtra eventos que contengan este texto en el organizador
+    - **titulo**: Filtra eventos que contengan este texto en el título
+    - **duration_minima**: Filtra eventos con duración mínima en minutos
+    - **duration_maxima**: Filtra eventos con duración máxima en minutos
+    
+    Si no se proporciona ningún filtro, devuelve todos los eventos.
     """
-    return list(database.eventos_collection.find({}))
+    # Construir el filtro de MongoDB
+    filtro = {}
+    
+    # Filtro de fechas
+    if fecha_inicio or fecha_fin:
+        filtro["horaComienzo"] = {}
+        
+        if fecha_inicio:
+            filtro["horaComienzo"]["$gte"] = fecha_inicio
+        
+        if fecha_fin:
+            filtro["horaComienzo"]["$lte"] = fecha_fin
+    
+    if lugar:
+        filtro["lugar"] = {"$regex": lugar, "$options": "i"}
+    
+    if organizador:
+        filtro["organizador"] = {"$regex": organizador, "$options": "i"}
+    
+    if titulo:
+        filtro["titulo"] = {"$regex": titulo, "$options": "i"}
+    
+    if duration_minima or duration_maxima:
+        filtro["duracionMinutos"] = {}
+
+        if duration_minima:
+            filtro["duracionMinutos"]["$gte"] = duration_minima
+
+        if duration_maxima:
+            filtro["duracionMinutos"]["$lte"] = duration_maxima
+
+    return list(database.eventos_collection.find(filtro))
 
 # 3. GET /events/{id} : Obtener un evento específico por su ID
 @router.get(

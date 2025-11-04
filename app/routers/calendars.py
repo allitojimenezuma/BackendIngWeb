@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Body, Response, status, HTTPException
+from fastapi import APIRouter, Body, Response, status, HTTPException, Query
 from pymongo import ReturnDocument
-from typing import List, Annotated
+from typing import List, Annotated, Optional
 from uuid import UUID, uuid4
 
 from ..models.calendar_models import CalendarCreate, CalendarInDB
@@ -48,11 +48,30 @@ async def create_calendar(
     response_model=List[CalendarInDB],
     response_description="Listar todos los calendarios",
 )
-async def list_calendars():
+async def list_calendars(
+    titulo: Optional[str] = Query(None, description="Filtrar por título"),
+    organizador: Optional[str] = Query(None, description="Filtrar por organizador"),
+    palabras_clave: Optional[List[str]] = Query(None, description="Filtrar por palabras clave"),
+    es_publico: Optional[bool] = Query(None, description="Filtrar por visibilidad pública"),
+):
     """
     Devuelve una lista de todos los calendarios en la base de datos.
     """
-    return list(database.calendarios_collection.find({}))
+    filtro = {}
+
+    if titulo:
+        filtro["titulo"] = {"$regex": titulo, "$options": "i"}
+
+    if organizador:
+        filtro["organizador"] = {"$regex": organizador, "$options": "i"}
+
+    if palabras_clave:
+        filtro["palabras_clave"] = {"$in": palabras_clave}
+
+    if es_publico is not None:
+        filtro["es_publico"] = es_publico
+
+    return list(database.calendarios_collection.find(filtro))
 
 
 # 3. GET /calendars/{id} : Obtener un calendario específico por su ID
