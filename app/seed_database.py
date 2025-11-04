@@ -20,11 +20,13 @@ try:
     print("\nLimpiando colecciones antiguas...")
     db.drop_collection('calendarios')
     db.drop_collection('eventos')
-    print("🧹 Colecciones 'calendarios' y 'eventos' eliminadas.")
+    db.drop_collection('comentarios')
+    print("🧹 Colecciones 'calendarios', 'eventos' y 'comentarios' eliminadas.")
 
     # Obtenemos las colecciones (se crearán automáticamente al insertar datos)
     calendarios_collection = db['calendarios']
     eventos_collection = db['eventos']
+    comentarios_collection = db['comentarios']
 
     # --- Creación de Datos de Ejemplo ---
     print("\nGenerando datos de ejemplo...")
@@ -64,9 +66,12 @@ try:
     print("✅ 3 calendarios de ejemplo insertados.")
 
     # 2. Insertar Eventos
+    evento_maraton_id = uuid.uuid4()
+    evento_noche_blanco_id = uuid.uuid4()
+    
     eventos_collection.insert_many([
         {
-            "_id": uuid.uuid4(),
+            "_id": evento_maraton_id,
             "idCalendario": sub_calendario_id,
             "titulo": "Maratón de la Ciudad",
             "horaComienzo": datetime(2025, 11, 15, 9, 0, 0),
@@ -78,7 +83,7 @@ try:
             }
         },
         {
-            "_id": uuid.uuid4(),
+            "_id": evento_noche_blanco_id,
             "idCalendario": calendario_principal_id,
             "titulo": "Noche en Blanco",
             "horaComienzo": datetime(2025, 10, 26, 20, 0, 0),
@@ -89,6 +94,39 @@ try:
         }
     ])
     print("✅ 2 eventos de ejemplo insertados.")
+
+    # 3. Insertar Comentarios
+    comentarios_collection.insert_many([
+        {
+            "_id": uuid.uuid4(),
+            "contenido": "¡Excelente maratón! Muy bien organizado y el recorrido estuvo perfecto.",
+            "idCalendario": None,
+            "idEvento": evento_maraton_id,
+            "fechaCreacion": datetime(2025, 11, 16, 10, 30, 0)
+        },
+        {
+            "_id": uuid.uuid4(),
+            "contenido": "Gran iniciativa de la ciudad. Esperamos más eventos así.",
+            "idCalendario": calendario_principal_id,
+            "idEvento": None,
+            "fechaCreacion": datetime(2025, 10, 20, 15, 45, 0)
+        },
+        {
+            "_id": uuid.uuid4(),
+            "contenido": "La Noche en Blanco fue increíble, muchas actividades culturales.",
+            "idCalendario": None,
+            "idEvento": evento_noche_blanco_id,
+            "fechaCreacion": datetime(2025, 10, 27, 9, 15, 0)
+        },
+        {
+            "_id": uuid.uuid4(),
+            "contenido": "Me encanta este calendario deportivo, tiene eventos muy variados.",
+            "idCalendario": sub_calendario_id,
+            "idEvento": None,
+            "fechaCreacion": datetime(2025, 11, 5, 12, 0, 0)
+        }
+    ])
+    print("✅ 4 comentarios de ejemplo insertados.")
 
     print("\n🎉 Base de datos poblada con éxito.")
 

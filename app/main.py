@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import calendars,events # Importamos nuestro nuevo router
+from .routers import calendars,events, comments # Importamos nuestro nuevo router
 
 
 app = FastAPI(
@@ -11,6 +11,7 @@ app = FastAPI(
 # Incluimos el router de calendarios en la aplicación principal.
 app.include_router(calendars.router)
 app.include_router(events.router)
+app.include_router(comments.router)
 
 @app.get("/")
 async def root():
