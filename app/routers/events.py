@@ -1,17 +1,19 @@
-from fastapi import APIRouter, Body, Response, status, HTTPException, Query
-from pymongo import ReturnDocument
+from fastapi import APIRouter, Body, Response, status, HTTPException, Query, Depends
 from typing import List, Annotated, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 from datetime import datetime
 
-from ..models.event_models import EventCreate,EventInDB
-from .. import database
+from ..service.eventService import EventService 
+from ..dependencies import get_event_service 
+from ..models.event_models import EventCreate, EventInDB
 
-# Router que agrupará todos los endpoints de eventos.
 router = APIRouter(
     prefix="/events",
     tags=["Eventos"]
 )
+
+# Definición del tipo inyectado (Dependencia del Servicio)
+EventServiceDep = Annotated[EventService, Depends(get_event_service)]
 
 # --- Endpoints ---
 
@@ -45,16 +47,15 @@ async def create_event(
                 }
             }
         }]
-    )]
+    )],
+    event_service: EventServiceDep # 👈 Inyección del Service
 ):
     """
     Crea un nuevo evento en la base de datos.
     """
-    event_dict = event.model_dump(by_alias=True)
-    event_dict["_id"] = uuid4()
-    new_event = database.eventos_collection.insert_one(event_dict)
-    created_event = database.eventos_collection.find_one({"_id": new_event.inserted_id})
-    return created_event
+    # Llama al Servicio y le pasa el modelo Pydantic validado.
+    return await event_service.create_event(event) 
+
 
 # 2. GET /events : Obtener una lista de todos los eventos (con filtros opcionales)
 @router.get(
@@ -63,6 +64,7 @@ async def create_event(
     response_description="Listar todos los eventos con filtros opcionales",
 )
 async def list_events(
+    event_service: EventServiceDep, # 👈 Inyección del Service
     fecha_inicio: Optional[datetime] = Query(
         None, 
         description="Fecha de inicio del rango (formato ISO: YYYY-MM-DDTHH:MM:SS)",
@@ -80,50 +82,13 @@ async def list_events(
     duration_maxima: Optional[int] = Query(None, description="Filtrar por duración maxima en minutos"),
 ):
     """
-    Devuelve una lista de eventos filtrados por rango de fechas.
-    
-    - **fecha_inicio**: Filtra eventos que comiencen a partir de esta fecha (inclusive)
-    - **fecha_fin**: Filtra eventos que comiencen hasta esta fecha (inclusive)
-    - **lugar**: Filtra eventos que contengan este texto en el lugar (case insensitive)
-    - **organizador**: Filtra eventos que contengan este texto en el organizador
-    - **titulo**: Filtra eventos que contengan este texto en el título
-    - **duration_minima**: Filtra eventos con duración mínima en minutos
-    - **duration_maxima**: Filtra eventos con duración máxima en minutos
-    
-    Si no se proporciona ningún filtro, devuelve todos los eventos.
+    Devuelve una lista de eventos filtrados. La lógica de construcción del filtro se delega al Servicio.
     """
-    # Construir el filtro de MongoDB
-    filtro = {}
-    
-    # Filtro de fechas
-    if fecha_inicio or fecha_fin:
-        filtro["horaComienzo"] = {}
-        
-        if fecha_inicio:
-            filtro["horaComienzo"]["$gte"] = fecha_inicio
-        
-        if fecha_fin:
-            filtro["horaComienzo"]["$lte"] = fecha_fin
-    
-    if lugar:
-        filtro["lugar"] = {"$regex": lugar, "$options": "i"}
-    
-    if organizador:
-        filtro["organizador"] = {"$regex": organizador, "$options": "i"}
-    
-    if titulo:
-        filtro["titulo"] = {"$regex": titulo, "$options": "i"}
-    
-    if duration_minima or duration_maxima:
-        filtro["duracionMinutos"] = {}
+    # Llama al Servicio con los parámetros de la Query.
+    return await event_service.list_events(
+        fecha_inicio, fecha_fin, lugar, organizador, titulo, duration_minima, duration_maxima
+    )
 
-        if duration_minima:
-            filtro["duracionMinutos"]["$gte"] = duration_minima
-
-        if duration_maxima:
-            filtro["duracionMinutos"]["$lte"] = duration_maxima
-
-    return list(database.eventos_collection.find(filtro))
 
 # 3. GET /events/{id} : Obtener un evento específico por su ID
 @router.get(
@@ -131,39 +96,39 @@ async def list_events(
     response_model=EventInDB,
     response_description="Obtener un evento por su ID",
 )
-async def get_event(id: UUID):
+async def get_event(id: UUID, event_service: EventServiceDep):
     """
     Busca un evento por su ID. Devuelve 404 si no lo encuentra.
     """
-    event = database.eventos_collection.find_one({"_id": id})
+    event = await event_service.get_event_by_id(id) # Llama al Servicio
     if event:
         return event
 
+    # El manejo de errores de "No encontrado" (404) permanece en el router.
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Evento con ID {id} no encontrado")
+
 
 # 4. PUT /events/{id} : Actualizar un evento existente
 @router.put(
     "/{id}",
     response_model=EventInDB,
-    response_description="Actualizar un calendario por su ID",
+    response_description="Actualizar un evento por su ID",
 )
 async def update_event(
     id: UUID, 
-    event_update: Annotated[EventCreate, Body(...)]
+    event_update: Annotated[EventCreate, Body(...)],
+    event_service: EventServiceDep
 ):
     """
     Actualiza un evento existente. Devuelve 404 si no lo encuentra.
     """
-    updated_event = database.eventos_collection.find_one_and_update(
-        {"_id": id},
-        {"$set": event_update.model_dump(by_alias=True, exclude_unset=True)},
-        return_document=ReturnDocument.AFTER
-    )
+    updated_event = await event_service.update_event(id, event_update) # Llama al Servicio
 
-    if event_update:
-        return event_update
-
+    if updated_event:
+        return updated_event
+    
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No se pudo actualizar, evento con ID {id} no encontrado")
+
 
 # 5. DELETE /events/{id} : Eliminar un evento
 @router.delete(
@@ -171,13 +136,14 @@ async def update_event(
     status_code=status.HTTP_204_NO_CONTENT,
     response_description="Eliminar un evento por su ID",
 )
-async def delete_event(id: UUID):
+async def delete_event(id: UUID, event_service: EventServiceDep):
     """
     Elimina un evento por su ID. Devuelve 204 si tiene éxito o 404 si no lo encuentra.
     """
-    delete_result = database.eventos_collection.delete_one({"_id": id})
+    was_deleted = await event_service.delete_event(id) # Llama al Servicio (solo devuelve True/False)
 
-    if delete_result.deleted_count == 0:
+    if not was_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Evento con ID {id} no encontrado")
 
+    # Si fue eliminado, devuelve la respuesta de éxito sin contenido.
     return Response(status_code=status.HTTP_204_NO_CONTENT)

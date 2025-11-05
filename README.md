@@ -62,18 +62,42 @@ python app/seed_database.py
 
 Deberías ver un mensaje indicando que la base de datos se ha poblado con éxito.
 
-### 7. Ejecutar la Aplicación
+### 7. Ejecutar la Aplicación con Docker
 
-Finalmente, inicia el servidor de desarrollo con Uvicorn.
+Verifica que tienes Docker y Docker Compose instalados en tu sistema.
 
 ```bash
-uvicorn app.main:app --reload
+docker compose up --build -d
 ```
+up: Inicia los servicios definidos en el docker-compose.yml.
 
-- `app.main:app`: Le dice a Uvicorn dónde encontrar la instancia de la aplicación FastAPI.
-- `--reload`: Reinicia el servidor automáticamente cada vez que detecta un cambio en el código.
+--build: Fuerza la construcción de la imagen de tu aplicación (BACKENDINGWEB) antes de iniciar el contenedor.
+
+-d: Ejecuta los contenedores en modo "detached" (segundo plano), liberando tu terminal.
+
+
+Puedes verificar que los contenedores se han levantado correctamente:
+```bash
+docker ps
+```
+docker compose ps
+Deberías ver tu servicio con el estado "running".
 
 ¡Listo! La API estará funcionando en `http://127.0.0.1:8000`.
+
+## 8.Detener ejecución
+Una vez probados los servicios con OpenAPI utilizaremos los siguientes comandos para detener la ejecución de nuestro contenedor docker:
+
+```bash
+docker ps
+```
+Este primer comando nos servira para saber el id de nuestro contenedor.
+Posteriormente usamos ese id en el siguiente comando:
+
+```bash
+docker stop 'id'
+```
+Tras este comando la ejecución del contenedor se detiene.
 
 ## ✅ Ejecución de Tests
 
