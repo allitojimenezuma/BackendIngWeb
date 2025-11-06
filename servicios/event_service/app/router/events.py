@@ -5,7 +5,7 @@ from datetime import datetime
 
 from ..service.eventService import EventService 
 from ..dependencies import get_event_service 
-from ..models.event_models import EventCreate, EventInDB
+from ..model.event_model import EventCreate, EventInDB
 
 router = APIRouter(
     prefix="/events",

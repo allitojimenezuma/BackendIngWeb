@@ -57,7 +57,7 @@ MONGODB_URI="mongodb+srv://<usuario>:<password>@<cluster>..."
 Para tener datos de ejemplo con los que trabajar, ejecuta el script `seed_database.py`. Este script limpiará las colecciones existentes y las llenará con datos nuevos.
 
 ```bash
-python app/seed_database.py
+python seed_database.py
 ```
 
 Deberías ver un mensaje indicando que la base de datos se ha poblado con éxito.
@@ -83,7 +83,11 @@ docker ps
 docker compose ps
 Deberías ver tu servicio con el estado "running".
 
-¡Listo! La API estará funcionando en `http://127.0.0.1:8000`.
+La API estará funcionando en `http://localhost:8000`.
+Para probar la api con swagger tendremos que usar los siguientes enlaces:
+ `http://localhost:8001/docs` para calendarios.
+ `http://localhost:8002/docs` para calendarios.
+ `http://localhost:8003/docs` para calendarios.
 
 ## 8.Detener ejecución
 Una vez probados los servicios con OpenAPI utilizaremos los siguientes comandos para detener la ejecución de nuestro contenedor docker:

@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from typing import List, Annotated, Optional
 from uuid import UUID, uuid4
 
-from ..models.calendar_models import CalendarCreate, CalendarInDB
+from ..model.calendar_models import CalendarCreate, CalendarInDB
 from .. import database
 
 # Router que agrupará todos los endpoints de calendarios.

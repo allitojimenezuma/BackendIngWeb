@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import calendars,events, comments # Importamos nuestro nuevo router
+from .router import calendars
 
 
 app = FastAPI(
@@ -10,9 +10,8 @@ app = FastAPI(
 
 # Incluimos el router de calendarios en la aplicación principal.
 app.include_router(calendars.router)
-app.include_router(events.router)
-app.include_router(comments.router)
+
 
 @app.get("/")
-async def root():
-    return {"message": "Bienvenido a la API de Kalendas. Visita /docs para ver la documentación."}
+def root():
+    return {"message": "Calendar Service activo y conectado"}

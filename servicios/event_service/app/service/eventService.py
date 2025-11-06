@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 
 # Importaciones de tu proyecto
-from ..models.event_models import EventCreate, EventInDB
+from ..model.event_model import EventCreate, EventInDB
 from ..crud.event_crud import EventCRUD # Usamos el CRUD inyectado
 
 class EventService:

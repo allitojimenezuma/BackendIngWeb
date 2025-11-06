@@ -3,7 +3,7 @@ from pymongo import ReturnDocument
 from typing import List, Annotated, Optional
 from uuid import UUID, uuid4
 
-from ..models.comment_models import CommentCreate, CommentInDB
+from ..model.comment_models import CommentCreate, CommentInDB
 from .. import database
 
 # Router que agrupará todos los endpoints de comentarios.

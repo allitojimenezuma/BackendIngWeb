@@ -11,5 +11,3 @@ uri = os.getenv('MONGODB_URI')
 client = MongoClient(uri, server_api=ServerApi('1'), uuidRepresentation='standard')
 db = client['KalendasDB']
 calendarios_collection = db['calendarios']
-eventos_collection = db['eventos']
-comentarios_collection = db['comentarios']

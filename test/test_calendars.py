@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from app.main import app
+from servicios.calendar_service.app.main import app
 import json
 
 client = TestClient(app)

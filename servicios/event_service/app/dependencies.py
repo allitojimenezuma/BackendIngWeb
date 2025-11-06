@@ -1,6 +1,5 @@
 from app.service.eventService import EventService
 from app.crud.event_crud import EventCRUD
-
 # Instanciación estática del CRUD (si no requiere sesión/estado)
 # Si EventCRUD requiriera una sesión de BD, esto usaría 'yield' y el patrón Context Manager
 EVENT_CRUD_INSTANCE = EventCRUD() 

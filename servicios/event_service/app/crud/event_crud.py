@@ -4,8 +4,8 @@ from datetime import datetime
 from pymongo import ReturnDocument
 
 # Importaciones de tu proyecto
-from .. import database 
-from ..models.event_models import EventCreate, EventInDB 
+from .. import database
+from ..model.event_model import EventCreate, EventInDB 
 
 # Alias para la colección de MongoDB (simplifica el código)
 EventCollection = database.eventos_collection 
