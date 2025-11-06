@@ -8,7 +8,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Incluimos el router de calendarios en la aplicación principal.
 app.include_router(calendars.router)
 
 

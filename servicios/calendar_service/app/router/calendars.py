@@ -1,16 +1,18 @@
-from fastapi import APIRouter, Body, Response, status, HTTPException, Query
-from pymongo import ReturnDocument
+from fastapi import APIRouter, Body, Response, status, HTTPException, Query, Depends
 from typing import List, Annotated, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
+from ..service.calendarService import CalendarService 
+from ..dependencies import get_calendar_service 
 from ..model.calendar_models import CalendarCreate, CalendarInDB
-from .. import database
 
-# Router que agrupará todos los endpoints de calendarios.
 router = APIRouter(
     prefix="/calendars",
     tags=["Calendarios"]
 )
+
+# Definición del tipo inyectado (Dependencia del Servicio)
+CalendarServiceDep = Annotated[CalendarService, Depends(get_calendar_service)]
 
 # --- Endpoints ---
 
@@ -30,48 +32,39 @@ async def create_calendar(
             "es_publico": True,
             "idCalendarioPadre": None,
         }]
-    )]
+    )],
+    calendar_service: CalendarServiceDep  # 👈 Inyección del Service
 ):
     """
     Crea un nuevo calendario en la base de datos.
     """
-    calendar_dict = calendar.model_dump(by_alias=True)
-    calendar_dict["_id"] = uuid4()
-    new_calendar = database.calendarios_collection.insert_one(calendar_dict)
-    created_calendar = database.calendarios_collection.find_one({"_id": new_calendar.inserted_id})
-    return created_calendar
+    # Llama al Servicio y le pasa el modelo Pydantic validado.
+    return await calendar_service.create_calendar(calendar)
 
 
-# 2. GET /calendars : Obtener una lista de todos los calendarios
+# 2. GET /calendars : Obtener una lista de todos los calendarios (con filtros opcionales)
 @router.get(
     "/",
     response_model=List[CalendarInDB],
-    response_description="Listar todos los calendarios",
+    response_description="Listar todos los calendarios con filtros opcionales",
 )
 async def list_calendars(
+    calendar_service: CalendarServiceDep,  # 👈 Inyección del Service
     titulo: Optional[str] = Query(None, description="Filtrar por título"),
     organizador: Optional[str] = Query(None, description="Filtrar por organizador"),
     palabras_clave: Optional[List[str]] = Query(None, description="Filtrar por palabras clave"),
     es_publico: Optional[bool] = Query(None, description="Filtrar por visibilidad pública"),
 ):
     """
-    Devuelve una lista de todos los calendarios en la base de datos.
+    Devuelve una lista de calendarios filtrados. La lógica de construcción del filtro se delega al Servicio.
     """
-    filtro = {}
-
-    if titulo:
-        filtro["titulo"] = {"$regex": titulo, "$options": "i"}
-
-    if organizador:
-        filtro["organizador"] = {"$regex": organizador, "$options": "i"}
-
-    if palabras_clave:
-        filtro["palabras_clave"] = {"$in": palabras_clave}
-
-    if es_publico is not None:
-        filtro["es_publico"] = es_publico
-
-    return list(database.calendarios_collection.find(filtro))
+    # Llama al Servicio con los parámetros de la Query.
+    return await calendar_service.list_calendars(
+        titulo=titulo,
+        organizador=organizador,
+        palabras_clave=palabras_clave,
+        es_publico=es_publico
+    )
 
 
 # 3. GET /calendars/{id} : Obtener un calendario específico por su ID
@@ -80,14 +73,15 @@ async def list_calendars(
     response_model=CalendarInDB,
     response_description="Obtener un calendario por su ID",
 )
-async def get_calendar(id: UUID):
+async def get_calendar(id: UUID, calendar_service: CalendarServiceDep):
     """
     Busca un calendario por su ID. Devuelve 404 si no lo encuentra.
     """
-    calendar = database.calendarios_collection.find_one({"_id": id})
+    calendar = await calendar_service.get_calendar_by_id(id)  # Llama al Servicio
     if calendar:
         return calendar
 
+    # El manejo de errores de "No encontrado" (404) permanece en el router.
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendario con ID {id} no encontrado")
 
 
@@ -99,20 +93,17 @@ async def get_calendar(id: UUID):
 )
 async def update_calendar(
     id: UUID, 
-    calendar_update: Annotated[CalendarCreate, Body(...)]
+    calendar_update: Annotated[CalendarCreate, Body(...)],
+    calendar_service: CalendarServiceDep
 ):
     """
     Actualiza un calendario existente. Devuelve 404 si no lo encuentra.
     """
-    updated_calendar = database.calendarios_collection.find_one_and_update(
-        {"_id": id},
-        {"$set": calendar_update.model_dump(by_alias=True, exclude_unset=True)},
-        return_document=ReturnDocument.AFTER
-    )
+    updated_calendar = await calendar_service.update_calendar(id, calendar_update)  # Llama al Servicio
 
     if updated_calendar:
         return updated_calendar
-
+    
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No se pudo actualizar, calendario con ID {id} no encontrado")
 
 
@@ -122,13 +113,14 @@ async def update_calendar(
     status_code=status.HTTP_204_NO_CONTENT,
     response_description="Eliminar un calendario por su ID",
 )
-async def delete_calendar(id: UUID):
+async def delete_calendar(id: UUID, calendar_service: CalendarServiceDep):
     """
     Elimina un calendario por su ID. Devuelve 204 si tiene éxito o 404 si no lo encuentra.
     """
-    delete_result = database.calendarios_collection.delete_one({"_id": id})
+    was_deleted = await calendar_service.delete_calendar(id)  # Llama al Servicio
 
-    if delete_result.deleted_count == 0:
+    if not was_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Calendario con ID {id} no encontrado")
 
+    # Si fue eliminado, devuelve la respuesta de éxito sin contenido.
     return Response(status_code=status.HTTP_204_NO_CONTENT)
