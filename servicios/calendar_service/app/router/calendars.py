@@ -124,3 +124,24 @@ async def delete_calendar(id: UUID, calendar_service: CalendarServiceDep):
 
     # Si fue eliminado, devuelve la respuesta de éxito sin contenido.
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+# 6. GET /calendars/{id}/subcalendars : Obtener los subcalendarios de un calendario padre
+@router.get(
+    "/{id}/subcalendars",
+    response_model=List[CalendarInDB],
+    response_description="Listar los subcalendarios de un calendario padre",
+)
+async def get_subcalendars(
+    id: UUID,
+    calendar_service: CalendarServiceDep
+):
+    """
+    Devuelve todos los subcalendarios cuyo campo id_calendario_padre coincide con el ID proporcionado.
+    """
+    subcalendars = await calendar_service.get_subcalendars(id) #Llama al Servicio
+
+    if not subcalendars:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Noo se encontraron subcalendarios para el calendario {id}")
+
+    return subcalendars
+

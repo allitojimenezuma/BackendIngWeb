@@ -53,3 +53,13 @@ class CalendarCRUD:
         """Elimina un calendario y devuelve el número de documentos eliminados (0 o 1)."""
         delete_result = CalendarCollection.delete_one({"_id": calendar_id})
         return delete_result.deleted_count
+    
+
+    async def get_subcalendars(self, parent_id: UUID) -> List[CalendarInDB]:
+        """Devuelve los subcalendarios que tienen como padre el ID indicado."""
+        filtro = {"idCalendarioPadre": parent_id}
+        cursor = CalendarCollection.find(filtro)
+        calendar_list = list(cursor)
+        return [CalendarInDB.model_validate(calendar) for calendar in calendar_list]
+
+
