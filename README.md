@@ -86,8 +86,8 @@ Deberías ver tu servicio con el estado "running".
 La API estará funcionando en `http://localhost:8000`.
 Para probar la api con swagger tendremos que usar los siguientes enlaces:
  `http://localhost:8001/docs` para calendarios.
- `http://localhost:8002/docs` para calendarios.
- `http://localhost:8003/docs` para calendarios.
+ `http://localhost:8002/docs` para eventos.
+ `http://localhost:8003/docs` para comentarios.
 
 ## 8.Detener ejecución
 Una vez probados los servicios con OpenAPI utilizaremos los siguientes comandos para detener la ejecución de nuestro contenedor docker:
