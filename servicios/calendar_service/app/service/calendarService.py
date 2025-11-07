@@ -73,10 +73,4 @@ class CalendarService:
         return await self.crud.get_subcalendars(parent_id)
 
     
-    # async def get_events_from_calendars(self, calendar_ids: List[UUID]):
-    #     """
-    #     Devuelve todos los eventos asociados a una lista de calendarios.
-    #     """
-    #     filtro = {"calendar_id": {"$in": [str(id) for id in calendar_ids]}}
-    #     return await self.crud.list_by_filter(filtro)
 

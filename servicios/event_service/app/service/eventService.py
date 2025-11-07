@@ -1,10 +1,14 @@
 from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime
+import httpx
+from fastapi import HTTPException, status
 
 # Importaciones de tu proyecto
 from ..model.event_model import EventCreate, EventInDB
 from ..crud.event_crud import EventCRUD # Usamos el CRUD inyectado
+
+CALENDAR_SERVICE_URL = "http://calendar_service:8000"
 
 class EventService:
     """
@@ -82,3 +86,36 @@ class EventService:
         """Elimina un evento y devuelve si la operación fue exitosa."""
         deleted_count = await self.crud.delete(event_id)
         return deleted_count > 0
+    
+    async def get_events_by_calendar_and_subcalendars(self, calendar_id: UUID) -> List[EventInDB]:
+        """
+        Llama al microservicio de calendarios para obtener los subcalendarios
+        y devuelve los eventos que pertenecen tanto al calendario padre como
+        a sus subcalendarios.
+        """
+        # Llamada al microservicio de calendarios
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{CALENDAR_SERVICE_URL}/calendars/{calendar_id}/subcalendars")
+
+                if response.status_code == 404:
+                    subcalendars = []  # El calendario no tiene subcalendarios
+                else:
+                    response.raise_for_status()
+                    subcalendars = response.json()
+
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"No se pudo conectar al servicio de calendarios: {str(e)}"
+            )
+ 
+        # Extraer los IDs de los subcalendarios
+        subcalendar_ids = [UUID(sub["_id"]) for sub in subcalendars]
+        all_calendar_ids = [calendar_id] + subcalendar_ids
+
+        # Buscar los eventos de todos esos calendarios
+        filtro = {"idCalendario": {"$in": all_calendar_ids}}
+        events = await self.crud.list_by_filter(filtro)
+
+        return events

@@ -147,3 +147,26 @@ async def delete_event(id: UUID, event_service: EventServiceDep):
 
     # Si fue eliminado, devuelve la respuesta de éxito sin contenido.
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# 6. GET /events/calendar/{calendar_id} : Obtener eventos de un calendario y sus subcalendarios
+@router.get(
+    "/calendar/{calendar_id}",
+    response_model=List[EventInDB],
+    response_description="Listar los eventos de un calendario y de sus subcalendarios",
+)
+async def get_events_from_calendar(
+    calendar_id: UUID,
+    event_service: EventServiceDep
+):
+    """
+    Devuelve todos los eventos del calendario indicado y de sus subcalendarios.
+    """
+    events = await event_service.get_events_by_calendar_and_subcalendars(calendar_id)
+    if not events:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No se encontraron eventos para el calendario {calendar_id}",
+        )
+    return events
+
