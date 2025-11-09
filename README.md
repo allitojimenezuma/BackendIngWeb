@@ -102,19 +102,3 @@ Posteriormente usamos ese id en el siguiente comando:
 docker stop 'id'
 ```
 Tras este comando la ejecución del contenedor se detiene.
-
-## ✅ Ejecución de Tests
-
-El proyecto incluye una suite de tests automatizados para garantizar la fiabilidad de la API. Utilizamos `pytest` para la ejecución de los tests.
-
-Para ejecutar la suite completa de tests, asegúrate de estar en el directorio raíz del proyecto (`/Backend`) y ejecuta el siguiente comando:
-
-```bash
-python -m pytest
-```
-
-Los tests se conectarán automáticamente a una base de datos de prueba separada (`KalendasDB_Test`), ejecutarán las pruebas contra todos los endpoints y luego limpiarán la base de datos de prueba. Esto asegura que los datos de desarrollo no se vean afectados. Para ver más detalles durante la ejecución (como la salida de `print`), puedes usar el flag `-s`:
-
-```bash
-python -m pytest -s
-```
