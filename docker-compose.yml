@@ -42,10 +42,3 @@ services:
     env_file:
       - .env
     restart: always
-    
-    # Variables de entorno para la configuración de la DB
-    environment:
-      # IMPORTANTE: Usamos 'db' como hostname, que es el nombre del servicio de la base de datos
-      DATABASE_URL: mongodb+srv://ignacio:Database15*@cluster0.mmxuyas.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-      # Puedes añadir aquí otras variables de entorno
-      
