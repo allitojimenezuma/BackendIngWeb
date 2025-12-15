@@ -3,12 +3,13 @@ from uuid import UUID, uuid4
 from datetime import datetime
 import httpx
 from fastapi import HTTPException, status
+import os
 
 # Importaciones de tu proyecto
 from ..model.event_model import EventCreate, EventInDB
 from ..crud.event_crud import EventCRUD # Usamos el CRUD inyectado
 
-CALENDAR_SERVICE_URL = "http://calendar_service:8000"
+CALENDAR_SERVICE_URL = os.getenv("CALENDAR_SERVICE_URL", "http://calendar_service:8000")
 
 class EventService:
     """
